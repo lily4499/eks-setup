@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'
+        AWS_ACCESS_KEY_ID = credentials('lil_AWS_Access_key_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('lil_AWS_Secret_access_key')
+        EKS_CLUSTER_NAME = 'eks_cluster'
+        ARGOCD_NAMESPACE = 'argocd'
+        ARGOCD_SERVER_URL = ''
+    }
+    
+    stages {
+        stage('Deploy ArgoCD') {
+            steps {
+                script {
+                    sh """
+                        aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
+                        kubectl apply -n ${ARGOCD_NAMESPACE} -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+                        kubectl wait --for=condition=available deployment/argocd-server -n ${ARGOCD_NAMESPACE} --timeout=300s
+                    """
+                }
+            }
+        }
+        
+        stage('Port Forward to ArgoCD') {
+            steps {
+                script {
+                    sh "kubectl -n ${ARGOCD_NAMESPACE} port-forward svc/argocd-server 8080:443 &"
+                    ARGOCD_SERVER_URL = "https://localhost:8080"
+                }
+            }
+        }
+        
+        stage('Install ArgoCD CLI') {
+            steps {
+                script {
+                    sh "wget https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 -O /usr/local/bin/argocd"
+                    sh "chmod +x /usr/local/bin/argocd"
+                }
+            }
+        }
+        
+        stage('Login to ArgoCD') {
+            steps {
+                script {
+                    sh "argocd login ${ARGOCD_SERVER_URL} --username admin --password admin --insecure"
+                }
+            }
+        }
+        
+        stage('Create ArgoCD Application') {
+            steps {
+                script {
+                    sh "argocd app create coming_soon_web --repo https://github.com/lily4499/node-express-manifest.git --path ./ --dest-server https://kubernetes.default.svc --dest-namespace default"
+                    sh "argocd app sync coming_soon_web"
+                }
+            }
+        }
+    }
+}
