@@ -16,7 +16,7 @@ pipeline {
                 script {
                     sh """
                         aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                        kubectl create namespace ${ARGOCD_NAMESPACE}
+                     //   kubectl create namespace ${ARGOCD_NAMESPACE}
                         kubectl apply -n ${ARGOCD_NAMESPACE} -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
                         kubectl wait --for=condition=available deployment/argocd-server -n ${ARGOCD_NAMESPACE} --timeout=300s
                     """
