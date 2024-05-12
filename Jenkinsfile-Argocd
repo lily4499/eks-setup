@@ -35,11 +35,13 @@ pipeline {
         stage('Install ArgoCD CLI') {
     steps {
         script {
-            sh "sudo wget https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 -O /usr/local/bin/argocd"
-            sh "sudo chmod +x /usr/local/bin/argocd"
+            sh "mkdir -p ~/.local/bin"
+            sh "wget https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 -O ~/.local/bin/argocd"
+            sh "chmod +x ~/.local/bin/argocd"
         }
     }
 }
+
         stage('Login to ArgoCD') {
             steps {
                 script {
