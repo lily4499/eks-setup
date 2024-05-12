@@ -42,14 +42,14 @@ pipeline {
     }
 }
 
-        stage('Login to ArgoCD') {
+       stage('Login to ArgoCD') {
     steps {
         script {
-            env.PATH = "/var/lib/jenkins/.local/bin:${env.PATH}"
-            sh "argocd login ${ARGOCD_SERVER_URL} --username admin --password admin --insecure"
+            sh "argocd login localhost:8080 --username admin --password admin --insecure"
         }
     }
 }
+
 
         
         stage('Create ArgoCD Application') {
